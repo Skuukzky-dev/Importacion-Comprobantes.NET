@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Importacion_Comprobantes.NET</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.5" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="7.0.0" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.8.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="GESI.CORE.BLL">
+      <HintPath>..\..\GESI.ERP.Core\bin\Debug\GESI.CORE.BLL.dll</HintPath>
+    </Reference>
+    <Reference Include="GESI.CORE.BO">
+      <HintPath>..\..\GESI.ERP.Core\bin\Debug\GESI.CORE.BO.dll</HintPath>
+    </Reference>
+    <Reference Include="GESI.CORE.DAL">
+      <HintPath>..\..\GESI.ERP.Core\bin\Debug\GESI.CORE.DAL.dll</HintPath>
+    </Reference>
+    <Reference Include="GESI.ERP.Core">
+      <HintPath>..\..\GESI.ERP.Core\bin\Debug\GESI.ERP.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="GESI.GESI.BLL">
+      <HintPath>..\..\GESI.ERP.API.ImportacionComprobantes\APIPedidos\APIPedidos\bin\GESI.GESI.BLL.dll</HintPath>
+    </Reference>
+    <Reference Include="GESI.GESI.BO">
+      <HintPath>..\..\GESI.ERP.API.ImportacionComprobantes\APIPedidos\APIPedidos\bin\GESI.GESI.BO.dll</HintPath>
+    </Reference>
+    <Reference Include="GESI.GESI.DAL">
+      <HintPath>..\..\GESI.ERP.API.ImportacionComprobantes\APIPedidos\APIPedidos\bin\GESI.GESI.DAL.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>
