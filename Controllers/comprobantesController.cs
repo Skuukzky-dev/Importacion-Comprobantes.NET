@@ -14,7 +14,7 @@ namespace Importacion_Comprobantes.NET.Controllers
         [HttpPost("AltaCobros")]
         public void AltaCobros([FromBody] Cobro oCobro)
         {
-
+            int hola = 0;
 
         }
 
@@ -22,6 +22,7 @@ namespace Importacion_Comprobantes.NET.Controllers
         [HttpPost("AltaPedidos")]
         public void AltaPedidos([FromBody] Pedido oPedido)
         {
+            int hola = 0;
 
         }
 
