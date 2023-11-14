@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using System.Net;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -11,6 +13,7 @@ namespace Importacion_Comprobantes.NET.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class comprobantesController : ControllerBase
     {
 
@@ -24,9 +27,12 @@ namespace Importacion_Comprobantes.NET.Controllers
         public static List<GESI.CORE.BO.Verscom2k.HabilitacionesAPI> moHabilitacionesAPI;
         public static GESI.CORE.BLL.SessionMgr _SessionMgr;
         public static string contenido = "";
+        public static bool HabilitadoPorToken = false;
+        public static string Token = "";
         #endregion
 
         [HttpPost("AltaCobros")]
+        [EnableCors("MyCorsPolicy")]
         public IActionResult AltaCobros([FromBody] List<Cobro> oCobros)
         {
             List<Request> lstRequests = new List<Request>();
@@ -45,6 +51,7 @@ namespace Importacion_Comprobantes.NET.Controllers
             {
                 try
                 {
+                    APIHelper.TipoDeAPI = "COBROS";
                     APISessionManager MiAPISessionMgr = APIHelper.SetearMgrAPI(mstrUsuarioID);
 
                     if (MiAPISessionMgr.Habilitado)
@@ -199,6 +206,7 @@ namespace Importacion_Comprobantes.NET.Controllers
 
 
         [HttpPost("AltaPedidos")]
+        [EnableCors("MyCorsPolicy")]
         public void AltaPedidos([FromBody] List<Pedido> oPedidos)
         {
             int hola = 0;

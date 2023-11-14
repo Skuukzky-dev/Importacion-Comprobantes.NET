@@ -27,8 +27,8 @@ namespace APIImportacionComprobantes.BO
         /// <summary>
         /// Fecha en la que se registra la Operacion
         /// </summary>
-        public string FechaRegistracion { get => _FechaRegistracion; set => _FechaRegistracion = value; }
-        public string Notas { get => _Notas; set => _Notas = value; }
+        public string? FechaRegistracion { get => _FechaRegistracion; set => _FechaRegistracion = value; }
+        public string? Notas { get => _Notas; set => _Notas = value; }
         public decimal TotalCobrado { get => _TotalCobrado; set => _TotalCobrado = value; }
         public List<ComprobanteAplicado>? ComprobantesAplicados { get => _ComprobantesAplicados; set => _ComprobantesAplicados = value; }
         public List<Valor>? Valores { get => _Valores; set => _Valores = value; }
