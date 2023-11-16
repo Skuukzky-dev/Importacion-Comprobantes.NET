@@ -34,7 +34,8 @@ namespace APIImportacionComprobantes.BLL
                             MiAPISessionMgr.SessionMgr.UsuarioID = oHabilitacion.UsuarioID;
                             MiAPISessionMgr.SessionMgr.SucursalID = oHabilitacion.SucursalID;
                             MiAPISessionMgr.SessionMgr.EntidadID = 1;
-
+                            MiAPISessionMgr.ComprobanteID = oHabilitacion.ComprobanteID;
+                            MiAPISessionMgr.UsuarioID = oHabilitacion.UsuarioID;
                             MiAPISessionMgr.ERPSessionMgr.EmpresaID = (uint)oHabilitacion.EmpresaID;
                             MiAPISessionMgr.ERPSessionMgr.UsuarioID = oHabilitacion.UsuarioID;
 
