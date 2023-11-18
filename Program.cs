@@ -124,36 +124,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
                         comprobantesController.mstrUsuarioID = MiObjetoLogin.UsuarioID;
                         comprobantesController.HabilitadoPorToken = true;
                         comprobantesController.Token = accessToken.RawData;
-                        /*
-                        ProductosController.strUsuarioID = MiObjetoLogin.UsuarioID;
-                        ProductosController.HabilitadoPorToken = true;
-                        ProductosController.TokenEnviado = accessToken.RawData;
-
-                        CanalesDeVentaController.strUsuarioID = MiObjetoLogin.UsuarioID;
-                        CanalesDeVentaController.HabilitadoPorToken = true;
-                        CanalesDeVentaController.TokenEnviado = accessToken.RawData;
-
-                        CategoriasController.strUsuarioID = MiObjetoLogin.UsuarioID;
-                        CategoriasController.HabilitadoPorToken = true;
-                        CategoriasController.TokenEnviado = accessToken.RawData;
-
-
-                        EmpresasController.strUsuarioID = MiObjetoLogin.UsuarioID;
-                        EmpresasController.HabilitadoPorToken = true;
-                        EmpresasController.TokenEnviado = accessToken.RawData;
-                        */
+                        
 
                     }
                     else // NO LO ENCONTRO EN LA BASE
                     {
-                        comprobantesController.HabilitadoPorToken = true;
-                        /*
-                        ProductosController.HabilitadoPorToken = false;
-                        CanalesDeVentaController.HabilitadoPorToken = false;
-                        CategoriasController.HabilitadoPorToken = false;
-                        EmpresasController.HabilitadoPorToken = false;
-                        */
-
+                        comprobantesController.HabilitadoPorToken = false;
                     }
                 }
             }

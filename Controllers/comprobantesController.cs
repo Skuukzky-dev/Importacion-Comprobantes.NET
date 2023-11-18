@@ -6,6 +6,7 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 using System.Net;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
+using Importacion_Comprobantes.NET.BO;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -51,117 +52,95 @@ namespace Importacion_Comprobantes.NET.Controllers
             {
                 try
                 {
-                    APIHelper.TipoDeAPI = "COBROS";
-                    APISessionManager MiAPISessionMgr = APIHelper.SetearMgrAPI(mstrUsuarioID);
-
-                    if (MiAPISessionMgr.Habilitado)
+                    if (!HabilitadoPorToken)
                     {
-                        LogSucesosAPI.LoguearErrores("----- Inicio Importacion de Comprobantes de Cobro ----", MiAPISessionMgr.SessionMgr.EmpresaID);
-                        LogSucesosAPI.LoguearErrores("Lote en JSON: " + contenido, MiAPISessionMgr.SessionMgr.EmpresaID);
+                        #region No esta habilitado por Token
+                        Request objRequest = new Request();
+                        objRequest.Error = APIHelper.DevolverErrorAPI((int)APIHelper.tErrores.ePermisosCobros, "No esta autorizado a acceder al servicio. No se encontro el token del usuario. Token Recibido: " + Token, "I",mstrUsuarioID, APIHelper.AltaCobros);
+                        objRequest.Success = false;
+                        return Unauthorized(objRequest);
+                        #endregion
+                    }
+                    else
+                    {
+                        APIHelper.TipoDeAPI = "COBROS";
+                        APISessionManager MiAPISessionMgr = APIHelper.SetearMgrAPI(mstrUsuarioID);
 
-                        bool blAcceso = GESI.CORE.BLL.Verscom2k.V2KAccesoMgr.ValidarPermisos(MiAPISessionMgr.UsuarioID, (int)APIHelper.PermisosOperaciones.pCobro);
+                        if (MiAPISessionMgr.Habilitado)
+                        {
+                            LogSucesosAPI.LoguearErrores("----- Inicio Importacion de Comprobantes de Cobro ----", MiAPISessionMgr.SessionMgr.EmpresaID);
+                            LogSucesosAPI.LoguearErrores("Lote en JSON: " + contenido, MiAPISessionMgr.SessionMgr.EmpresaID);
 
-                        if (!blAcceso) // Tiene Permisos para Agregar , Editar / Eliminar Cobros
-                        {
-                            #region Acceso
-                            Request objRequest = new Request();
-                            objRequest.Error = APIHelper.DevolverErrorAPI((int)APIHelper.tErrores.ePermisosCobros, "No tiene permisos para dar de alta cobranzas (12700)", "I", MiAPISessionMgr.SessionMgr.UsuarioID, APIHelper.AltaCobros);
-                            objRequest.Success = false;
-                            return Unauthorized(objRequest);
-                            #endregion
-                        }
-                        else
-                        {
-                            if (oCobros != null)
+                            bool blAcceso = GESI.CORE.BLL.Verscom2k.V2KAccesoMgr.ValidarPermisos(MiAPISessionMgr.UsuarioID, (int)APIHelper.PermisosOperaciones.pCobro);
+
+                            if (!blAcceso) // Tiene Permisos para Agregar , Editar / Eliminar Cobros
                             {
-                                if (oCobros.Count > 0)
+                                #region Acceso
+                                Request objRequest = new Request();
+                                objRequest.Error = APIHelper.DevolverErrorAPI((int)APIHelper.tErrores.ePermisosCobros, "No tiene permisos para dar de alta cobranzas (12700)", "I", MiAPISessionMgr.SessionMgr.UsuarioID, APIHelper.AltaCobros);
+                                objRequest.Success = false;
+                                return Unauthorized(objRequest);
+                                #endregion
+                            }
+                            else
+                            {
+                                if (oCobros != null)
                                 {
-
-                                    int intCantidadMaximaDeComprobantes = Convert.ToInt32(System.Configuration.ConfigurationManager.AppSettings["CantidadMaximaDeComprobantesAImportar"]);
-
-                                    if (intCantidadMaximaDeComprobantes > 100)
-                                        intCantidadMaximaDeComprobantes = 100;
-
-                                    if (oCobros.Count > intCantidadMaximaDeComprobantes) // Cantidad Maxima de Comprobantes a Importar 
+                                    if (oCobros.Count > 0)
                                     {
-                                        Request objRequest = new Request();
-                                        objRequest.Error = APIHelper.DevolverErrorAPI((int)APIHelper.tErrores.eCantidadDeComprobantesExcedida, "Se supera la cantidad maxima de comprobantes a Importar", "E", MiAPISessionMgr.SessionMgr.UsuarioID,APIHelper.AltaCobros);
-                                        objRequest.Success = false;
-                                        lstRequests.Add(objRequest);
-                                    }
-                                    else
-                                    {
-                                        #region Levanto Caja, Valores y Ref Contables                                     
-                                        int mointSubdiarioID = 0;
-                                        int mointTipoOperacionID = 0;
-                                        GESI.GESI.BLL.TablasGeneralesGESIMgr.SessionManager = MiAPISessionMgr.SessionMgr;
-                                        GESI.CORE.BLL.ConfiguracionesBaseMgr.SessionManager = MiAPISessionMgr.SessionMgr;
-                                        GESI.GESI.BLL.ReferenciasContablesMgr.SessionManager = MiAPISessionMgr.SessionMgr;
-                                        GESI.CORE.BLL.Verscom2k.ComprobantesMgr.sessionMgr = MiAPISessionMgr.SessionMgr;
 
-                                        GESI.GESI.BO.ListaCajasYBancos lstListaCajasYBancos = GESI.GESI.BLL.TablasGeneralesGESIMgr.GetListCajasYBancos();
-                                        GESI.GESI.BO.ListaValores lstListaValores = GESI.GESI.BLL.TablasGeneralesGESIMgr.GetListValores(false);
-                                        GESI.CORE.BO.ListaConfiguracionesBase lstListaConfiguraciones = GESI.CORE.BLL.ConfiguracionesBaseMgr.GetList();
-                                        GESI.CORE.BO.Verscom2k.Comprobante oComprobante = GESI.CORE.BLL.Verscom2k.ComprobantesMgr.GetItem(MiAPISessionMgr.ComprobanteID);
-                                        List<GESI.CORE.BO.ConfiguracionBase> oConfiguracionBase = lstListaConfiguraciones.Where(x => x.GrupoID == "VENTAS" && x.SeccionID == "Comprobante_" + MiAPISessionMgr.SessionMgr.EmpresaID + "_" + oComprobante.ComprobanteID).ToList();
+                                        int intCantidadMaximaDeComprobantes = Convert.ToInt32(System.Configuration.ConfigurationManager.AppSettings["CantidadMaximaDeComprobantesAImportar"]);
 
-                                        GESI.GESI.BO.ListaBancos lstBancos = new GESI.GESI.BO.ListaBancos();
-                                        lstBancos = GESI.GESI.BLL.TablasGeneralesGESIMgr.GetListBancos();
+                                        if (intCantidadMaximaDeComprobantes > 100)
+                                            intCantidadMaximaDeComprobantes = 100;
 
-                                        if (oConfiguracionBase != null)
-                                        {
-                                            if (oConfiguracionBase.Count > 0)
-                                            {
-                                                foreach (GESI.CORE.BO.ConfiguracionBase oConfiguracion in oConfiguracionBase)
-                                                {
-
-                                                    if (oConfiguracion.ItemID.Equals("SubdiarioID"))
-                                                    {
-                                                        mointSubdiarioID = Convert.ToInt32(oConfiguracion.Valor);
-                                                    }
-
-                                                    if (oConfiguracion.ItemID.Equals("TipoDeOperacionID"))
-                                                    {
-                                                        mointTipoOperacionID = Convert.ToInt32(oConfiguracion.Valor);
-
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                        if (mointTipoOperacionID == 0)
-                                        {
-                                            mointTipoOperacionID = 1;
-                                        }
-                                        #endregion
-                                        
-                                        if (mointSubdiarioID == 0)
+                                        if (oCobros.Count > intCantidadMaximaDeComprobantes) // Cantidad Maxima de Comprobantes a Importar 
                                         {
                                             Request objRequest = new Request();
-                                            objRequest.Error = APIHelper.DevolverErrorAPI((int)APIHelper.tErrores.eDatoVacioONull, "No se encontro el SubdiarioID en el ComprobanteID: " + moComprobanteID, "E", MiAPISessionMgr.SessionMgr.UsuarioID, APIHelper.AltaCobros);
+                                            objRequest.Error = APIHelper.DevolverErrorAPI((int)APIHelper.tErrores.eCantidadDeComprobantesExcedida, "Se supera la cantidad maxima de comprobantes a Importar", "E", MiAPISessionMgr.SessionMgr.UsuarioID, APIHelper.AltaCobros);
                                             objRequest.Success = false;
                                             lstRequests.Add(objRequest);
                                         }
                                         else
                                         {
+                                             
+                                            VariablesIniciales oVariableInicial = APIHelper.DevolverVariablesIniciales(MiAPISessionMgr);
 
-                                            GESI.GESI.BO.ListaReferenciasContables lstListaRefContables = GESI.GESI.BLL.ReferenciasContablesMgr.GetList(MiAPISessionMgr.SessionMgr.EmpresaID);
-                                            foreach (Cobro oCobro in oCobros)
+                                            if (oVariableInicial.SubdiarioID == 0)
                                             {
-                                                if (oCobro.CobroID > 0 && oCobro.Cliente != null && oCobro.Valores != null)
+                                                Request objRequest = new Request();
+                                                objRequest.Error = APIHelper.DevolverErrorAPI((int)APIHelper.tErrores.eDatoVacioONull, "No se encontro el SubdiarioID en el ComprobanteID: " + moComprobanteID, "E", MiAPISessionMgr.SessionMgr.UsuarioID, APIHelper.AltaCobros);
+                                                objRequest.Success = false;
+                                                lstRequests.Add(objRequest);
+                                            }
+                                            else
+                                            {
+
+                                                oVariableInicial.LstReferenciasContables = GESI.GESI.BLL.ReferenciasContablesMgr.GetList(MiAPISessionMgr.SessionMgr.EmpresaID);
+                                                foreach (Cobro oCobro in oCobros)
                                                 {
-                                                    CobrosMgr._SessionMgr = MiAPISessionMgr.SessionMgr;
-                                                    lstRequests.Add(CobrosMgr.ImportarCobro(oCobro, lstListaCajasYBancos, lstListaValores, lstListaConfiguraciones, oComprobante, mointSubdiarioID, mointTipoOperacionID, lstListaRefContables, lstBancos));
-                                                }
-                                                else
-                                                {
-                                                    Request objRequest = new Request();
-                                                    objRequest.Error = APIHelper.DevolverErrorAPI((int)APIHelper.tErrores.eDatoVacioONull, "No se encontro datos a procesar", "E", mstrUsuarioID, APIHelper.AltaCobros);
-                                                    objRequest.Success = false;
-                                                    lstRequests.Add(objRequest);                                                    
+                                                    if (oCobro.CobroID > 0 && oCobro.Cliente != null && oCobro.Valores != null)
+                                                    {
+                                                        CobrosMgr._SessionMgr = MiAPISessionMgr.SessionMgr;
+                                                        lstRequests.Add(CobrosMgr.ImportarCobro(oCobro, oVariableInicial));
+                                                    }
+                                                    else
+                                                    {
+                                                        Request objRequest = new Request();
+                                                        objRequest.Error = APIHelper.DevolverErrorAPI((int)APIHelper.tErrores.eDatoVacioONull, "No se encontro datos a procesar", "E", mstrUsuarioID, APIHelper.AltaCobros);
+                                                        objRequest.Success = false;
+                                                        lstRequests.Add(objRequest);
+                                                    }
                                                 }
                                             }
                                         }
+                                    }
+                                    else
+                                    {
+                                        Request objRequest = new Request();
+                                        objRequest.Error = APIHelper.DevolverErrorAPI((int)APIHelper.tErrores.eDatoVacioONull, "No se encontro datos a procesar", "E", mstrUsuarioID, APIHelper.AltaCobros);
+                                        objRequest.Success = false;
+                                        lstRequests.Add(objRequest);
                                     }
                                 }
                                 else
@@ -172,24 +151,18 @@ namespace Importacion_Comprobantes.NET.Controllers
                                     lstRequests.Add(objRequest);
                                 }
                             }
-                            else
-                            {
-                                Request objRequest = new Request();
-                                objRequest.Error = APIHelper.DevolverErrorAPI((int)APIHelper.tErrores.eDatoVacioONull, "No se encontro datos a procesar", "E", mstrUsuarioID, APIHelper.AltaCobros);
-                                objRequest.Success = false;
-                                lstRequests.Add(objRequest);
-                            }
                         }
-                    }
-                    else
-                    {
-                        Request objRequest = new Request();
-                        objRequest.Error = APIHelper.DevolverErrorAPI((int)APIHelper.tErrores.ePermisosCobros, "No se encontro datos a procesar", "E", mstrUsuarioID, APIHelper.AltaCobros);
-                        objRequest.Success = false;
-                        lstRequests.Add(objRequest);
-                    }
+                        else
+                        {
+                            Request objRequest = new Request();
+                            objRequest.Error = APIHelper.DevolverErrorAPI((int)APIHelper.tErrores.ePermisosCobros, "No se encontro datos a procesar", "E", mstrUsuarioID, APIHelper.AltaCobros);
+                            objRequest.Success = false;
+                            lstRequests.Add(objRequest);
+                        }
 
-                    return Ok(lstRequests);
+
+                        return Ok(lstRequests);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -223,202 +196,161 @@ namespace Importacion_Comprobantes.NET.Controllers
             }
             else
             {
-                #region Modelo Valido
+                
                 try
                 {
-                    APIHelper.TipoDeAPI = "PEDIDOS";
-                    APISessionManager MiAPISessionMgr = APIHelper.SetearMgrAPI(mstrUsuarioID);
-                   
-                    //LogSucesosAPI.LoguearErroresPedidos("EmpresaID: " + _SessionMgr.EmpresaID + " | UsuarioID: " + _SessionMgr.UsuarioID + " | JSON: " + contenido, _SessionMgr.EmpresaID);
 
-                    if (MiAPISessionMgr.Habilitado)
+                    if (!HabilitadoPorToken)
                     {
-                        if (oPedidos == null)
+                        #region No esta habilitado por Token
+                        Request objRequest = new Request();
+                        objRequest.Error = APIHelper.DevolverErrorAPI((int)APIHelper.tErrores.ePermisosCobros, "No esta autorizado a acceder al servicio. No se encontro el token del usuario. Token Recibido: " + Token, "I", mstrUsuarioID, APIHelper.AltaPedidos);
+                        objRequest.Success = false;
+                        return Unauthorized(objRequest);
+                        #endregion
+                    }
+                    else
+                    {
+                        APIHelper.TipoDeAPI = "PEDIDOS";
+                        APISessionManager MiAPISessionMgr = APIHelper.SetearMgrAPI(mstrUsuarioID);
+
+                        //LogSucesosAPI.LoguearErroresPedidos("EmpresaID: " + _SessionMgr.EmpresaID + " | UsuarioID: " + _SessionMgr.UsuarioID + " | JSON: " + contenido, _SessionMgr.EmpresaID);
+
+                        if (MiAPISessionMgr.Habilitado)
                         {
-                            #region No se encontraron pedidos a importar
-                            Request objRequest = new Request();
-                            objRequest.Error = APIHelper.DevolverErrorAPI((int)APIHelper.tErrores.eFormatoIncorrectoSolicitud, "No se encontraron pedidos a importar", "E", mstrUsuarioID, APIHelper.AltaPedidos);
-                            objRequest.Success = false;
-                            lstRequests.Add(objRequest);
-                            return BadRequest(lstRequests);
-                            #endregion
-                        }
-                        else
-                        {
-                            if (oPedidos.Count == 0)
+                            if (oPedidos == null)
                             {
                                 #region No se encontraron pedidos a importar
                                 Request objRequest = new Request();
-                                objRequest.Error = APIHelper.DevolverErrorAPI((int)APIHelper.tErrores.eDatoVacioONull, "No se encontraron pedidos a importar", "E", mstrUsuarioID, APIHelper.AltaPedidos);
+                                objRequest.Error = APIHelper.DevolverErrorAPI((int)APIHelper.tErrores.eFormatoIncorrectoSolicitud, "No se encontraron pedidos a importar", "E", mstrUsuarioID, APIHelper.AltaPedidos);
                                 objRequest.Success = false;
                                 lstRequests.Add(objRequest);
+                                return BadRequest(lstRequests);
                                 #endregion
                             }
                             else
                             {
-                                int intCantidadMaximaDeComprobantes = Convert.ToInt32(System.Configuration.ConfigurationManager.AppSettings["CantidadMaximaDeComprobantesAImportar"]);
+                                bool blAcceso = GESI.CORE.BLL.Verscom2k.V2KAccesoMgr.ValidarPermisos(MiAPISessionMgr.UsuarioID, (int)APIHelper.PermisosOperaciones.pPedido);
 
-                                if (intCantidadMaximaDeComprobantes > 100)
-                                    intCantidadMaximaDeComprobantes = 100;
-
-                                if (oPedidos.Count > intCantidadMaximaDeComprobantes) // Cantidad Maxima de Comprobantes a Importar 
+                                if (!blAcceso)
                                 {
-                                    #region Cantidad maxima de comprobantes a Importar
+                                    #region No tiene permisos el usuario para ingresar pedidos
                                     Request objRequest = new Request();
-                                    objRequest.Error = new APIImportacionComprobantes.BO.Error();
+                                    objRequest.Error = APIHelper.DevolverErrorAPI((int)APIHelper.tErrores.ePermisosCobros, "No tiene permisos para dar de alta pedidos (12100)", "E", mstrUsuarioID, APIHelper.AltaPedidos);
                                     objRequest.Success = false;
-                                    objRequest.Response = new Response();
-                                    objRequest.Error.Code = (int)DefinicionesErrores.eDatoVacioONull;
-                                    objRequest.Error.Message = "Se supera la cantidad maxima de comprobantes a Importar";
                                     lstRequests.Add(objRequest);
+                                    return Unauthorized(lstRequests);
                                     #endregion
                                 }
                                 else
                                 {
-                                    #region Declarar Variables 
-                                    GESI.GESI.BLL.TablasGeneralesGESIMgr.SessionManager = MiAPISessionMgr.SessionMgr;
-                                    GESI.CORE.BLL.TablasGeneralesMgr.SessionManager = MiAPISessionMgr.SessionMgr;
-                                    GESI.CORE.BLL.Verscom2k.ComprobantesMgr.sessionMgr = MiAPISessionMgr.SessionMgr;
-                                    GESI.CORE.BLL.Verscom2k.AlmacenesMgr.SessionManager = MiAPISessionMgr.SessionMgr;
-                                    GESI.CORE.BLL.ConfiguracionesBaseMgr.SessionManager = MiAPISessionMgr.SessionMgr;
-                                    GESI.CORE.BLL.EmpresasMgr.SessionManager = MiAPISessionMgr.SessionMgr;
 
-
-                                    GESI.CORE.BO.Verscom2k.ListaAlicuotasImpuestos moAlicuotasImpuestos = new GESI.CORE.BO.Verscom2k.ListaAlicuotasImpuestos();
-                                    GESI.CORE.BO.Verscom2k.ListaFormasDePago moFormaDePago = new GESI.CORE.BO.Verscom2k.ListaFormasDePago();
-                                    GESI.CORE.BO.Verscom2k.Comprobante oComprobante = new GESI.CORE.BO.Verscom2k.Comprobante();
-                                    GESI.CORE.BLL.Verscom2k.FormasDePagoMgr.sessionMgr = MiAPISessionMgr.SessionMgr;
-                                    moAlicuotasImpuestos = GESI.CORE.DAL.Verscom2k.TablasGeneralesGESIDB.GetListAlicuotasImpuestos();
-                                    moFormaDePago = GESI.CORE.BLL.Verscom2k.FormasDePagoMgr.GetList();
-                                    GESI.CORE.BO.Empresa oEmpresa = GESI.CORE.BLL.EmpresasMgr.GetItem(MiAPISessionMgr.SessionMgr.EmpresaID);
-                                    oComprobante = GESI.CORE.BLL.Verscom2k.ComprobantesMgr.GetItem(MiAPISessionMgr.ComprobanteID);
-
-                                    List<GESI.CORE.BO.Verscom2k.Comprobante> lstComprobantes = GESI.CORE.BLL.Verscom2k.ComprobantesMgr.GetList();
-
-                                    GESI.CORE.BO.ListaConfiguracionesBase lstListaConfiguraciones = GESI.CORE.BLL.ConfiguracionesBaseMgr.GetList();
-
-                                    GESI.CORE.BO.Verscom2k.ListaAlmacenes lstAlmacenes = new GESI.CORE.BO.Verscom2k.ListaAlmacenes();
-                                    lstAlmacenes = GESI.CORE.BLL.Verscom2k.AlmacenesMgr.GetList();
-
-                                    GESI.GESI.BO.ListaCanalesDeVenta lstCanalesDeVenta = new GESI.GESI.BO.ListaCanalesDeVenta();
-                                    lstCanalesDeVenta = GESI.GESI.BLL.TablasGeneralesGESIMgr.CanalesDeVentaGetList();
-
-                                    List<GESI.GESI.BO.CanalDeAtencion> lstCanalesDeAtencion = GESI.GESI.BLL.TablasGeneralesGESIMgr.CanalesDeAtencionGetList();
-
-                                    List<GESI.CORE.BO.ConfiguracionBase> oConfiguracionBase = lstListaConfiguraciones.Where(x => x.GrupoID == "VENTAS" && x.SeccionID == "Comprobante_" + MiAPISessionMgr.SessionMgr.EmpresaID + "_" + oComprobante.ComprobanteID).ToList();
-
-                                    GESI.GESI.BO.ListaEstadosComprobantesDeVentas lstListaEstadosComprobantes = GESI.GESI.BLL.TablasGeneralesGESIMgr.EstadosComprobantesDeVentaGetList();
-
-                                    int mointSubdiarioID = 0;
-                                    int mointTipoOperacionID = 1;
-
-                                    if (oConfiguracionBase != null)
+                                    if (oPedidos.Count == 0)
                                     {
-                                        if (oConfiguracionBase.Count > 0)
-                                        {
-                                            foreach (GESI.CORE.BO.ConfiguracionBase oConfiguracion in oConfiguracionBase)
-                                            {
-
-                                                if (oConfiguracion.ItemID.Equals("SubdiarioID"))
-                                                {
-                                                    mointSubdiarioID = Convert.ToInt32(oConfiguracion.Valor);
-                                                }
-
-                                                if (oConfiguracion.ItemID.Equals("TipoDeOperacionID"))
-                                                {
-                                                    mointTipoOperacionID = Convert.ToInt32(oConfiguracion.Valor);
-
-                                                }
-                                            }
-                                        }
-                                    }
-
-
-                                    #endregion
-
-
-                                    if (mointSubdiarioID == 0)
-                                    {
-                                        #region No tiene asignado un SubdiarioID
+                                        #region No se encontraron pedidos a importar
                                         Request objRequest = new Request();
-                                        objRequest.Error = new APIImportacionComprobantes.BO.Error();
+                                        objRequest.Error = APIHelper.DevolverErrorAPI((int)APIHelper.tErrores.eDatoVacioONull, "No se encontraron pedidos a importar", "E", mstrUsuarioID, APIHelper.AltaPedidos);
                                         objRequest.Success = false;
-                                        objRequest.Response = new Response();
-                                        objRequest.Error.Code = 400;
-                                        objRequest.Error.Message = "El comprobante no tiene asignado un SubdiarioID";
+                                        lstRequests.Add(objRequest);
                                         #endregion
                                     }
                                     else
                                     {
-                                        #region Importar Pedidos
-                                        PedidosMgr._SessionMgr =MiAPISessionMgr.SessionMgr;
-                                        GESI.GESI.BO.ListaReferenciasContables lstListaRefContables = GESI.GESI.BLL.ReferenciasContablesMgr.GetList(MiAPISessionMgr.SessionMgr.EmpresaID);
+                                        int intCantidadMaximaDeComprobantes = Convert.ToInt32(System.Configuration.ConfigurationManager.AppSettings["CantidadMaximaDeComprobantesAImportar"]);
 
-                                        LogSucesosAPI.LoguearErrores("Lote enviado. JSON: " + contenido, MiAPISessionMgr.SessionMgr.EmpresaID);
+                                        if (intCantidadMaximaDeComprobantes > 100)
+                                            intCantidadMaximaDeComprobantes = 100;
 
-                                        foreach (Pedido oPedido in oPedidos)
+                                        if (oPedidos.Count > intCantidadMaximaDeComprobantes) // Cantidad Maxima de Comprobantes a Importar 
                                         {
-                                            if (oPedido.ComprobanteID <= 0)
-                                            {
-                                                if (oPedido.TipoDeComprobante != null)
-                                                {
-                                                    if (oPedido.TipoDeComprobante.Length > 0)
-                                                    {
-                                                        List<GESI.CORE.BO.Verscom2k.Comprobante> lstComprobantesAux = lstComprobantes.Where(x => x.Descripcion.Contains(oPedido.TipoDeComprobante) && x.ClaseDeComprobanteID == 104 && x.EmpresaID == MiAPISessionMgr.SessionMgr.EmpresaID).ToList();
+                                            #region Cantidad maxima de comprobantes a Importar
+                                            Request objRequest = new Request();
+                                            objRequest.Error = APIHelper.DevolverErrorAPI((int)APIHelper.tErrores.eCantidadDeComprobantesExcedida, "Se supera la cantidad maxima de comprobantes a Importar", "E", mstrUsuarioID, "AltaPedidos");
+                                            objRequest.Success = false;
+                                            lstRequests.Add(objRequest);
+                                            #endregion
+                                        }
+                                        else
+                                        {
+                                            VariablesIniciales oVariableInicial = APIHelper.DevolverVariablesIniciales(MiAPISessionMgr);
 
-                                                        if (lstComprobantesAux.Count > 0)
+                                            if (oVariableInicial.SubdiarioID == 0)
+                                            {
+                                                #region No tiene asignado un SubdiarioID
+                                                Request objRequest = new Request();
+                                                objRequest.Error = APIHelper.DevolverErrorAPI((int)APIHelper.tErrores.eDatoVacioONull, "El comprobante no tiene asignado un SubdiarioID", "E", mstrUsuarioID, "AltaPedidos");
+                                                objRequest.Success = false;
+                                                #endregion
+                                            }
+                                            else
+                                            {
+                                                #region Importar Pedidos
+                                                PedidosMgr._SessionMgr = MiAPISessionMgr.SessionMgr;                                               
+                                                LogSucesosAPI.LoguearErrores("Lote enviado. JSON: " + contenido, MiAPISessionMgr.SessionMgr.EmpresaID);
+
+                                                foreach (Pedido oPedido in oPedidos)
+                                                {
+                                                    if (oPedido.ComprobanteID <= 0)  // SI NO SE LE ENVIA EL ATRIBUTO COMPROBANTEID BUSCA POR DESCRIPCION. EN CASO QUE NO SE ENCUENTRE TOMA EL PREDETERMINADO
+                                                    {
+                                                        if (oPedido.TipoDeComprobante != null)
                                                         {
-                                                            lstRequests.Add(PedidosMgr.ImportarPedido(oPedido, moAlicuotasImpuestos, moFormaDePago, lstComprobantesAux[0], lstListaConfiguraciones, oEmpresa, mointTipoOperacionID, lstAlmacenes, lstCanalesDeVenta, lstListaEstadosComprobantes, lstListaRefContables, lstCanalesDeAtencion));
+                                                            if (oPedido.TipoDeComprobante.Length > 0)
+                                                            {
+                                                                List<GESI.CORE.BO.Verscom2k.Comprobante> lstComprobantesAux = oVariableInicial.LstComprobantes.Where(x => x.Descripcion.Contains(oPedido.TipoDeComprobante) && x.ClaseDeComprobanteID == 104 && x.EmpresaID == MiAPISessionMgr.SessionMgr.EmpresaID).ToList();
+
+                                                                if (lstComprobantesAux.Count > 0)
+                                                                {
+                                                                    lstRequests.Add(PedidosMgr.ImportarPedido(oPedido, oVariableInicial, lstComprobantesAux[0]));
+                                                                }
+                                                                else
+                                                                {
+                                                                    lstRequests.Add(PedidosMgr.ImportarPedido(oPedido, oVariableInicial,oVariableInicial.Comprobante));
+                                                                }
+                                                            }
+                                                            else
+                                                            {
+                                                                lstRequests.Add(PedidosMgr.ImportarPedido(oPedido, oVariableInicial,oVariableInicial.Comprobante));
+                                                            }
                                                         }
                                                         else
                                                         {
-                                                            lstRequests.Add(PedidosMgr.ImportarPedido(oPedido, moAlicuotasImpuestos, moFormaDePago, oComprobante, lstListaConfiguraciones, oEmpresa, mointTipoOperacionID, lstAlmacenes, lstCanalesDeVenta, lstListaEstadosComprobantes, lstListaRefContables, lstCanalesDeAtencion));
+                                                            lstRequests.Add(PedidosMgr.ImportarPedido(oPedido, oVariableInicial, oVariableInicial.Comprobante));
                                                         }
                                                     }
                                                     else
                                                     {
-                                                        lstRequests.Add(PedidosMgr.ImportarPedido(oPedido, moAlicuotasImpuestos, moFormaDePago, oComprobante, lstListaConfiguraciones, oEmpresa, mointTipoOperacionID, lstAlmacenes, lstCanalesDeVenta, lstListaEstadosComprobantes, lstListaRefContables, lstCanalesDeAtencion));
+                                                        #region Tiene ComprobanteID 
+                                                        //TOMA EL COMPROBANTEID Y LO LEVANTA DE TABLA COMPROBANTES
+                                                        List<GESI.CORE.BO.Verscom2k.Comprobante> lstComprobantesAux = oVariableInicial.LstComprobantes.Where(x => x.ClaseDeComprobanteID == 104 && x.EmpresaID == MiAPISessionMgr.SessionMgr.EmpresaID && x.ComprobanteID == oPedido.ComprobanteID).ToList();
+
+                                                        if (lstComprobantesAux.Count > 0)
+                                                        {
+                                                            lstRequests.Add(PedidosMgr.ImportarPedido(oPedido, oVariableInicial, lstComprobantesAux[0]));
+                                                        }
+                                                        else
+                                                        {
+                                                            lstRequests.Add(PedidosMgr.ImportarPedido(oPedido, oVariableInicial, oVariableInicial.Comprobante));
+                                                        }
+
+                                                        #endregion
                                                     }
                                                 }
-                                                else
-                                                {
-                                                    lstRequests.Add(PedidosMgr.ImportarPedido(oPedido, moAlicuotasImpuestos, moFormaDePago, oComprobante, lstListaConfiguraciones, oEmpresa, mointTipoOperacionID, lstAlmacenes, lstCanalesDeVenta, lstListaEstadosComprobantes, lstListaRefContables, lstCanalesDeAtencion));
-                                                }
-                                            }
-                                            else
-                                            {
-                                                #region Tiene ComprobanteID
-                                                List<GESI.CORE.BO.Verscom2k.Comprobante> lstComprobantesAux = lstComprobantes.Where(x => x.ClaseDeComprobanteID == 104 && x.EmpresaID == MiAPISessionMgr.SessionMgr.EmpresaID && x.ComprobanteID == oPedido.ComprobanteID).ToList();
-
-                                                if (lstComprobantesAux.Count > 0)
-                                                {
-                                                    lstRequests.Add(PedidosMgr.ImportarPedido(oPedido, moAlicuotasImpuestos, moFormaDePago, lstComprobantesAux[0], lstListaConfiguraciones, oEmpresa, mointTipoOperacionID, lstAlmacenes, lstCanalesDeVenta, lstListaEstadosComprobantes, lstListaRefContables, lstCanalesDeAtencion));
-                                                }
-                                                else
-                                                {
-                                                    lstRequests.Add(PedidosMgr.ImportarPedido(oPedido, moAlicuotasImpuestos, moFormaDePago, oComprobante, lstListaConfiguraciones, oEmpresa, mointTipoOperacionID, lstAlmacenes, lstCanalesDeVenta, lstListaEstadosComprobantes, lstListaRefContables, lstCanalesDeAtencion));
-                                                }
-
                                                 #endregion
                                             }
                                         }
-                                        #endregion
                                     }
                                 }
                             }
-                        }
 
-                    }
-                    else
-                    {
-                        #region No esta autorizado a acceder a este recurso
-                        Request objRequest = new Request();
-                        objRequest.Error = new APIImportacionComprobantes.BO.Error();
-                        objRequest.Success = false;
-                        objRequest.Response = new Response();
-                        objRequest.Error.Code = 400;
-                        objRequest.Error.Message = "No esta autorizado a acceder a este recurso.";
-                        #endregion
+                        }
+                        else
+                        {
+                            #region No esta autorizado a acceder a este recurso
+                            Request objRequest = new Request();
+                            objRequest.Error = APIHelper.DevolverErrorAPI((int)APIHelper.tErrores.ePermisosPedidos, "No esta autorizado a acceder a este recurso.", "E", mstrUsuarioID, APIHelper.AltaPedidos);
+                            objRequest.Success = false;
+                            #endregion
+                        }
                     }
 
                 }
@@ -426,14 +358,11 @@ namespace Importacion_Comprobantes.NET.Controllers
                 {
                     #region Internal Server Error
                     Request objRequest = new Request();
-                    objRequest.Error = new APIImportacionComprobantes.BO.Error();
+                    objRequest.Error = APIHelper.DevolverErrorAPI((int)APIHelper.tErrores.eErrorInternoAplicacion, "Error interno de la Aplicacion. Descripcion: " + ex.Message, "E", mstrUsuarioID, "AltaPedidos");
                     objRequest.Success = false;
-                    objRequest.Response = new Response();
-                    objRequest.Error.Code = 500;
-                    objRequest.Error.Message = "Error interno de la Aplicacion. Descripcion: " + ex.Message + " Contenido JSON: " + contenido;
                     #endregion
                 }
-                #endregion
+               
 
                 return Ok(lstRequests);
             }

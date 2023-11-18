@@ -1,4 +1,5 @@
 ﻿using APIImportacionComprobantes.BO;
+using Importacion_Comprobantes.NET.BO;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -38,7 +39,7 @@ namespace APIImportacionComprobantes.BLL
         /// <param name="lstConfiguraciones"></param>
         /// <param name="oComprobante"></param>
         /// <returns></returns>
-        public static Request ImportarCobro(APIImportacionComprobantes.BO.Cobro oCobro,GESI.GESI.BO.ListaCajasYBancos lstCajasYBancos, GESI.GESI.BO.ListaValores lstValores, GESI.CORE.BO.ListaConfiguracionesBase lstConfiguraciones, GESI.CORE.BO.Verscom2k.Comprobante oComprobante, int mointSubdiarioID,int mointTipoOperacionID,GESI.GESI.BO.ListaReferenciasContables lstReferenciasContables, GESI.GESI.BO.ListaBancos lstBancos)
+        public static Request ImportarCobro(APIImportacionComprobantes.BO.Cobro oCobro,VariablesIniciales oVariablesIniciales)
         {
             Request respuesta = new Request();
 
@@ -60,16 +61,16 @@ namespace APIImportacionComprobantes.BLL
                                 try
                                 {
                                     DateTime oFecha = DateTime.Parse(oCobro.FechaRegistracion, null, System.Globalization.DateTimeStyles.RoundtripKind);
-                                    SetearVariablesGlobalesAUtilizar(oFecha,oComprobante,lstConfiguraciones);
+                                    SetearVariablesGlobalesAUtilizar(oFecha,oVariablesIniciales.Comprobante,oVariablesIniciales.LstConfiguraciones);
                                 }
-                                catch (Exception ex) //Parse fecha
+                                catch (FormatException ex) //Parse fecha
                                 {
-                                    throw ex;
+                                    respuesta = DevolverObjetoRequest(false, (int)APIHelper.tErrores.eFormatoIncorrectoSolicitud, "Formato Incorrecto de fecha", oCobro.CobroID);
                                 }
-                                #endregion
+                            #endregion
 
 
-                                if (moEjercicios != null)
+                            if (moEjercicios != null)
                                 {
                                     if (moEjercicios.Count == 1) //Contiene un periodo contable
                                     {
@@ -87,14 +88,14 @@ namespace APIImportacionComprobantes.BLL
                                                         if (oCobro.Cliente.ClienteID > 0)
                                                         {
                                                             
-                                                            if (oComprobante != null)
+                                                            if (oVariablesIniciales.Comprobante != null)
                                                             {
-                                                                if (oComprobante.ClaseDeComprobanteID == 120)
+                                                                if (oVariablesIniciales.Comprobante.ClaseDeComprobanteID == 120)
                                                                 {
                                                                     GESI.CORE.BO.Verscom2k.Cliente oCliente = GESI.CORE.DAL.Verscom2k.TablasGeneralesGESIDB.GetItemCliente(oCobro.Cliente.ClienteID, 0, "", _SessionMgr.EmpresaID);
                                                                     if (oCliente != null)
                                                                     {
-                                                                        respuesta = AltaCobranza(oCliente, oCobro, oComprobante, lstCajasYBancos, lstValores, lstConfiguraciones, mointSubdiarioID, mointTipoOperacionID, lstReferenciasContables, lstBancos);
+                                                                        respuesta = AltaCobranza(oCliente, oCobro, oVariablesIniciales.Comprobante, oVariablesIniciales.LstCajasYBancos, oVariablesIniciales.LstValores, oVariablesIniciales.LstConfiguraciones, oVariablesIniciales.SubdiarioID, oVariablesIniciales.TipoDeOperacion, oVariablesIniciales.LstReferenciasContables, oVariablesIniciales.LstBancos);
                                                                     }
                                                                     else
                                                                     {
@@ -113,7 +114,6 @@ namespace APIImportacionComprobantes.BLL
                                                             {
                                                                 respuesta = DevolverObjetoRequest(false, (int)DefinicionesErrores.eNoEncontrado, "No se encontro el comprobante a utilizar", oCobro.CobroID);
                                                                 LogSucesosAPI.LoguearErrores("No se encontro el comprobanteID a utilizar en la Base de datos. CobranzaID: " + oCobro.CobroID,_SessionMgr.EmpresaID);
-
                                                             }
                                                         }
                                                         else
