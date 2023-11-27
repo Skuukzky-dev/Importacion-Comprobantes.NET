@@ -37,7 +37,7 @@ namespace APIImportacionComprobantes.BLL
         /// <param name="oComprobante"></param>
         /// <param name="lstConfiguracionesBase"></param>
         /// <returns></returns>
-        public static  Request ImportarPedido(APIImportacionComprobantes.BO.Pedido objPedido, VariablesIniciales oVariablesIniciales, GESI.CORE.BO.Verscom2k.Comprobante oComprobante)
+        public static  Request ImportarPedido(APIImportacionComprobantes.BO.Pedido objPedido, VariablesIniciales oVariablesIniciales)
                                      
         {
             Request respuesta = new Request();
@@ -73,7 +73,8 @@ namespace APIImportacionComprobantes.BLL
                                             return respuesta;
                                         }
                                         #endregion
-                                        if (oComprobante != null)
+
+                                        if (oVariablesIniciales.Comprobante != null)
                                         {
                                             if (oVariablesIniciales.OEmpresa != null)
                                             {
@@ -87,6 +88,7 @@ namespace APIImportacionComprobantes.BLL
                                                 String moReleerPrecios = "NO";
                                                 moDescuentoPieComoItem = "NO";
                                                 //RELEER PRECIOS
+
                                                 #region Releer Precios
                                                 List<GESI.CORE.BO.ConfiguracionBase> lstConfiguracion = oVariablesIniciales.LstConfiguraciones.Where(x => x.GrupoID == "Ventas" && x.SeccionID == "ImportarNPE" && x.ItemID == "ReleerPrecios").ToList();
 
@@ -98,7 +100,7 @@ namespace APIImportacionComprobantes.BLL
 
                                                 int AlmacenID = 0;
 
-                                                lstConfiguracion = oVariablesIniciales.LstConfiguraciones.Where(x => x.GrupoID == "VENTAS" && x.SeccionID == "Comprobante_"+_SessionMgr.EmpresaID+"_"+oComprobante.ComprobanteID && x.ItemID == "AlmacenID").ToList();
+                                                lstConfiguracion = oVariablesIniciales.LstConfiguraciones.Where(x => x.GrupoID == "VENTAS" && x.SeccionID == "Comprobante_"+_SessionMgr.EmpresaID+"_"+ oVariablesIniciales.Comprobante.ComprobanteID && x.ItemID == "AlmacenID").ToList();
 
                                                 if (lstConfiguracion.Count > 0)
                                                 {
@@ -122,13 +124,12 @@ namespace APIImportacionComprobantes.BLL
                                                     GESI.CORE.BO.Verscom2k.MovimientoDeCliente oMovimiento = new GESI.CORE.BO.Verscom2k.MovimientoDeCliente();
                                                     GESI.CORE.BLL.Verscom2k.ClientesMgr.SessionManager = _SessionMgr;
                                                     GESI.CORE.BO.Verscom2k.Cliente oCliente = GESI.CORE.BLL.Verscom2k.ClientesMgr.ClientesGetItem(objPedido.Cliente.ClienteID);
-                                                        //GESI.CORE.DAL.Verscom2k.TablasGeneralesGESIDB.GetItemCliente(objPedido.Cliente.ClienteID, 0, "", _SessionMgr.EmpresaID);
-
+                                                    
                                                     if (oCliente != null)
                                                     {
                                                         if (oCliente.CanalDeVentaID == 0) // Canal De venta
                                                         {
-                                                            List<GESI.GESI.BO.CanalDeVenta> lstCanalDeVentaABuscar = oVariablesIniciales.LstCanalesDeVenta.Where(x => x.Predeterminado == true).ToList();
+                                                            List<GESI.ERP.Core.BO.cCanalDeVenta> lstCanalDeVentaABuscar = oVariablesIniciales.LstCanalesDeVenta.Where(x => x.Predeterminado == true).ToList();
                                                             if (lstCanalDeVentaABuscar.Count > 0)
                                                             {
                                                                 oCliente.CanalDeVentaID = lstCanalDeVentaABuscar[0].CanalDeVentaID;
@@ -154,7 +155,7 @@ namespace APIImportacionComprobantes.BLL
                                                             GESI.ERP.Core.BLL.CuentasConClientesManager.SessionManager = _SessionMgr;
                                                             GESI.ERP.Core.BLL.CuentasConClientesManager.ERPsessionManager = new GESI.ERP.Core.SessionManager();
                                                             
-                                                            respuesta = AltaPedido(objPedido, oCliente, oComprobante, oVariablesIniciales.OEmpresa, oVariablesIniciales.LstAlicuotasImpuestos, oVariablesIniciales.LstFormaDePago, moReleerPrecios, oVariablesIniciales.TipoDeOperacion, AlmacenID, oVariablesIniciales.LstEstadosComprobantesVenta, oVariablesIniciales.LstReferenciasContables, oVariablesIniciales.LstConfiguraciones, oVariablesIniciales.LstCanalesDeAtencion);
+                                                            respuesta = AltaPedido(objPedido, oCliente, oVariablesIniciales, moReleerPrecios, AlmacenID);
                                                       
                                                         #endregion
                                                     }
@@ -174,23 +175,23 @@ namespace APIImportacionComprobantes.BLL
 
                                                                     if (oCliente != null)
                                                                     {
-                                                                        respuesta = AltaPedido(objPedido, oCliente, oComprobante, oVariablesIniciales.OEmpresa, oVariablesIniciales.LstAlicuotasImpuestos, oVariablesIniciales.LstFormaDePago, moReleerPrecios, oVariablesIniciales.TipoDeOperacion, AlmacenID, oVariablesIniciales.LstEstadosComprobantesVenta, oVariablesIniciales.LstReferenciasContables,oVariablesIniciales.LstConfiguraciones, oVariablesIniciales.LstCanalesDeAtencion);
+                                                                        respuesta = AltaPedido(objPedido, oCliente,oVariablesIniciales,moReleerPrecios,AlmacenID);
                                                                     }
                                                                 }
                                                                 else
                                                                 {
-                                                                    respuesta = AltaPedido(objPedido, oClienteABuscar, oComprobante, oVariablesIniciales.OEmpresa, oVariablesIniciales.LstAlicuotasImpuestos, oVariablesIniciales.LstFormaDePago, moReleerPrecios, oVariablesIniciales.TipoDeOperacion, AlmacenID, oVariablesIniciales.LstEstadosComprobantesVenta, oVariablesIniciales.LstReferenciasContables, oVariablesIniciales.LstConfiguraciones, oVariablesIniciales.LstCanalesDeAtencion);
+                                                                    respuesta = AltaPedido(objPedido, oClienteABuscar, oVariablesIniciales, moReleerPrecios, AlmacenID);
                                                                 }
                                                             }
                                                             else
                                                             {
-                                                                respuesta = VerificarClientePredeterminado(objPedido, null, oComprobante, oVariablesIniciales.OEmpresa, oVariablesIniciales.LstAlicuotasImpuestos, oVariablesIniciales.LstFormaDePago, moReleerPrecios, oVariablesIniciales.TipoDeOperacion, AlmacenID, oVariablesIniciales.LstEstadosComprobantesVenta,oVariablesIniciales.LstReferenciasContables,oVariablesIniciales.LstConfiguraciones, oVariablesIniciales.LstCanalesDeAtencion);
+                                                                respuesta = VerificarClientePredeterminado(objPedido, null,oVariablesIniciales,moReleerPrecios,AlmacenID);
                                                             }
                                                             #endregion
                                                         }
                                                         else
                                                         {
-                                                            respuesta = VerificarClientePredeterminado(objPedido, null, oComprobante, oVariablesIniciales.OEmpresa, oVariablesIniciales.LstAlicuotasImpuestos, oVariablesIniciales.LstFormaDePago, moReleerPrecios, oVariablesIniciales.TipoDeOperacion, AlmacenID, oVariablesIniciales.LstEstadosComprobantesVenta, oVariablesIniciales.LstReferenciasContables, oVariablesIniciales.LstConfiguraciones, oVariablesIniciales.LstCanalesDeAtencion);
+                                                            respuesta = VerificarClientePredeterminado(objPedido, null, oVariablesIniciales, moReleerPrecios,AlmacenID);
                                                         }
 
                                                     }
@@ -404,19 +405,14 @@ namespace APIImportacionComprobantes.BLL
         /// </summary>
         /// <param name="oPedido"></param>
         /// <param name="oCliente"></param>
-        private static  Request AltaPedido(Pedido oPedido, GESI.CORE.BO.Verscom2k.Cliente oCliente, GESI.CORE.BO.Verscom2k.Comprobante oComprobante, 
-                                        GESI.CORE.BO.Empresa oEmpresa, GESI.CORE.BO.Verscom2k.ListaAlicuotasImpuestos moAlicuotasImpuestos,
-                                        GESI.CORE.BO.Verscom2k.ListaFormasDePago moFormaDePago,String mstrReleePrecios,int intTipoOperacionID,int AlmacenID,
-                                        GESI.GESI.BO.ListaEstadosComprobantesDeVentas lstEstadosComprobantesVenta, GESI.GESI.BO.ListaReferenciasContables lstListaRefContables, 
-                                        GESI.CORE.BO.ListaConfiguracionesBase lstConfiguracionesBase,List<GESI.GESI.BO.CanalDeAtencion> lstCanalesDeAtencion)
+        private static  Request AltaPedido(Pedido oPedido, GESI.CORE.BO.Verscom2k.Cliente oCliente, VariablesIniciales oVariablesIniciales,String mstrReleePrecios,int AlmacenID)
         {
           
-            GESI.GESI.BO.MovimientoDeCliente oMovimientoAImportar = LlenarObjetoMovimientoCliente(oPedido, oCliente, oComprobante, oEmpresa, moAlicuotasImpuestos, 
-                                                                                                moFormaDePago, mstrReleePrecios, intTipoOperacionID, AlmacenID,lstListaRefContables, moDescuentoPieComoItem,
-                                                                                                 lstConfiguracionesBase,lstCanalesDeAtencion);
+            GESI.GESI.BO.MovimientoDeCliente oMovimientoAImportar = LlenarObjetoMovimientoCliente(oPedido, oCliente,oVariablesIniciales, mstrReleePrecios, AlmacenID, moDescuentoPieComoItem
+                                                                                                 );
          
             Request objRequest = new Request();
-            bool oValidar = ValidarObjetoMovimientoDeCliente(oMovimientoAImportar,lstEstadosComprobantesVenta);
+            bool oValidar = ValidarObjetoMovimientoDeCliente(oMovimientoAImportar, oVariablesIniciales.LstEstadosComprobantesVenta);
             int EstadoComprobanteID = 0;
 
             if (oValidar == true)
@@ -431,7 +427,7 @@ namespace APIImportacionComprobantes.BLL
                     EstadoComprobanteID = Convert.ToInt32(System.Configuration.ConfigurationManager.AppSettings["EstadoOKID"]);
                 }
 
-                if(lstEstadosComprobantesVenta?.Count > 0)
+                if(oVariablesIniciales.LstEstadosComprobantesVenta?.Count > 0)
                 {
                     oMovimientoAImportar.EstadoComprobanteDeVentaID = EstadoComprobanteID;
                 }
@@ -450,7 +446,7 @@ namespace APIImportacionComprobantes.BLL
 
                         myConn.Open();
                         myTran = myConn.BeginTransaction("TN_ALTANPE");
-                        int ProximoNumero = GESI.CORE.DAL.Verscom2k.MovimientosDeClientesDB.UltimoComprobante(_SessionMgr.EmpresaID, oComprobante.ComprobanteID, oComprobante.Serie, oComprobante.PuntoDeVentaID) + 1;
+                        int ProximoNumero = GESI.CORE.DAL.Verscom2k.MovimientosDeClientesDB.UltimoComprobante(_SessionMgr.EmpresaID, oVariablesIniciales.Comprobante.ComprobanteID, oVariablesIniciales.Comprobante.Serie, oVariablesIniciales.Comprobante.PuntoDeVentaID) + 1;
                         oMovimientoAImportar.Numero = ProximoNumero;
 
                         int oNumeroComprobante = GESI.GESI.DAL.MovimientosDeClientesDB.Save(oMovimientoAImportar, true, myConn, myTran);
@@ -522,10 +518,8 @@ namespace APIImportacionComprobantes.BLL
         /// <param name="moFormaDePago"></param>
         /// <param name="mstrReleePrecios"></param>
         /// <returns></returns>
-        private static GESI.GESI.BO.MovimientoDeCliente LlenarObjetoMovimientoCliente(Pedido oPedido, GESI.CORE.BO.Verscom2k.Cliente oCliente, GESI.CORE.BO.Verscom2k.Comprobante oComprobante,
-                                                                                    GESI.CORE.BO.Empresa oEmpresa, GESI.CORE.BO.Verscom2k.ListaAlicuotasImpuestos moAlicuotasImpuestos, GESI.CORE.BO.Verscom2k.ListaFormasDePago moFormaDePago, 
-                                                                                    String mstrReleePrecios,int intTipoOperacionID,int AlmacenID,GESI.GESI.BO.ListaReferenciasContables lstListaRefContables,String moDescuentoPieComoItem,
-                                                                                    GESI.CORE.BO.ListaConfiguracionesBase lstConfiguracionesBase,List<GESI.GESI.BO.CanalDeAtencion> lstCanalesDeAtencion)
+        private static GESI.GESI.BO.MovimientoDeCliente LlenarObjetoMovimientoCliente(Pedido oPedido, GESI.CORE.BO.Verscom2k.Cliente oCliente,VariablesIniciales oVariablesIniciales,                                                                                  
+                                                                                    String mstrReleePrecios,int AlmacenID,String moDescuentoPieComoItem)
         {
             try
             {
@@ -542,8 +536,8 @@ namespace APIImportacionComprobantes.BLL
                 
 
                 oMovimiento.EmpresaID = _SessionMgr.EmpresaID;
-                oMovimiento.ComprobanteID = oComprobante.ComprobanteID;
-                oMovimiento.Serie = oComprobante.Serie;
+                oMovimiento.ComprobanteID = oVariablesIniciales.Comprobante.ComprobanteID;
+                oMovimiento.Serie = oVariablesIniciales.Comprobante.Serie;
                 oMovimiento.ClienteID = oCliente.ClienteID;
                 oMovimiento.RazonSocial = oCliente.RazonSocial;
                 oMovimiento.Pendiente = true;                
@@ -554,16 +548,16 @@ namespace APIImportacionComprobantes.BLL
                 oMovimiento.VendedorID = oPedido.VendedorID;
 
                 #region CanalDeAtencion
-                if (lstCanalesDeAtencion?.Count > 0)
+                if (oVariablesIniciales.LstCanalesDeAtencion?.Count > 0)
                 {
-                    List<GESI.GESI.BO.CanalDeAtencion> lstCanalesDeAtencionAux = lstCanalesDeAtencion.Where(x => x.Predeterminado == true).ToList();
+                    List<GESI.GESI.BO.CanalDeAtencion> lstCanalesDeAtencionAux = oVariablesIniciales.LstCanalesDeAtencion.Where(x => x.Predeterminado == true).ToList();
                     if(lstCanalesDeAtencionAux.Count > 0)
                     {
                         oMovimiento.CanalDeAtencionID = lstCanalesDeAtencionAux[0].CanalDeAtencionID;
                     }
                     else
                     {
-                        oMovimiento.CanalDeAtencionID = lstCanalesDeAtencion[0].CanalDeAtencionID;
+                        oMovimiento.CanalDeAtencionID = oVariablesIniciales.LstCanalesDeAtencion[0].CanalDeAtencionID;
                     }
                 }
                 else
@@ -576,7 +570,7 @@ namespace APIImportacionComprobantes.BLL
                     if (oCliente.FormaDePagoID > 0)
                 {
                     oMovimiento.FormaDePagoID = oCliente.FormaDePagoID;
-                    List<GESI.CORE.BO.Verscom2k.FormaDePago> lstFormaDePago = moFormaDePago.Where(x => x.FormaDePagoID == oCliente.FormaDePagoID).ToList();
+                    List<GESI.CORE.BO.Verscom2k.FormaDePago> lstFormaDePago = oVariablesIniciales.LstFormaDePago.Where(x => x.FormaDePagoID == oCliente.FormaDePagoID).ToList();
                     if(lstFormaDePago.Count > 0)
                     {
                         Contado = lstFormaDePago[0].Contado;
@@ -584,7 +578,7 @@ namespace APIImportacionComprobantes.BLL
                 }
                 else
                 {
-                    List<GESI.CORE.BO.Verscom2k.FormaDePago> lstFormaDePago = moFormaDePago.Where(x => x.Predeterminado == true).ToList();
+                    List<GESI.CORE.BO.Verscom2k.FormaDePago> lstFormaDePago = oVariablesIniciales.LstFormaDePago.Where(x => x.Predeterminado == true).ToList();
 
                     if (lstFormaDePago.Count > 0)
                     {
@@ -593,16 +587,16 @@ namespace APIImportacionComprobantes.BLL
                     }
                     else
                     {
-                        oMovimiento.FormaDePagoID = moFormaDePago[0].FormaDePagoID;
-                        Contado = moFormaDePago[0].Contado;
+                        oMovimiento.FormaDePagoID = oVariablesIniciales.LstFormaDePago[0].FormaDePagoID;
+                        Contado = oVariablesIniciales.LstFormaDePago[0].Contado;
                     }
                 }
                 #endregion
 
                 oMovimiento.TipoDeDocumentoID = oCliente.TipoDeDocumentoID;
-                oMovimiento.PuntoDeVentaID = oComprobante.PuntoDeVentaID;
+                oMovimiento.PuntoDeVentaID = oVariablesIniciales.Comprobante.PuntoDeVentaID;
                 oMovimiento.SubTipo = DefinicionesGenerales.SubTipoPedido;
-                oMovimiento.TipoOperacionID = intTipoOperacionID;
+                oMovimiento.TipoOperacionID = oVariablesIniciales.TipoDeOperacion;
                 oMovimiento.CondicionIVA = oCliente.CondicionIVA;
                 oMovimiento.Notas = oCliente.LeyendaFacturas+" "+ oPedido.Notas;
                 oMovimiento.Notas2 = "Codigo de Pedido: " + oPedido.PedidoID+ "\r \n" + strObservaciones;
@@ -649,12 +643,16 @@ namespace APIImportacionComprobantes.BLL
                 int itemGenerales = 1;
                 foreach (Item oItem in oPedido.Items)
                 {
-                    GESI.CORE.BLL.Verscom2k.ProductosMgr.sessionMgr = _SessionMgr;
+
+
+
+                    GESI.CORE.BLL.Verscom2k.ProductosMgr.sessionMgr = _SessionMgr; // REMPLAZAR CON GESI.ERP
                     GESI.CORE.BO.Verscom2k.Producto Producto = GESI.CORE.BLL.Verscom2k.ProductosMgr.GetItem(oItem.ProductoID);
-                    
+                    //GESI.ERP.Core.BO.cProducto Producto = GESI.ERP.Core.BLL.ProductosManager.GetItem(oItem.ProductoID);
+
                     if (Producto != null)
                     {
-                        oComprVenta.DetalleDeItems.Add(DeterminarDetalleDeVenta(Producto, oCliente.CanalDeVentaID, oItem, oCliente, oEmpresa, oComprobante, oPedido.TipoPrecio, moAlicuotasImpuestos, mstrReleePrecios));
+                        oComprVenta.DetalleDeItems.Add(DeterminarDetalleDeVenta(Producto, oCliente.CanalDeVentaID, oItem, oCliente,oVariablesIniciales, oPedido.TipoPrecio,mstrReleePrecios));
 
                        
                             if (Producto.ProductosEInsumos?.Count > 0) // Si tiene insumos
@@ -710,7 +708,7 @@ namespace APIImportacionComprobantes.BLL
                     oComprVenta.DescuentoPorcentaje = oPedido.DescuentoPorcentajes;
                     GESI.ERP.Core.BO.cComprobanteVenta oComprobanteConTotales = GESI.ERP.Core.BLL.ComprobanteDeVentaManager.CalcularTotales(oComprVenta);
                     
-                    if(oComprobante.Impuestos == false)
+                    if(oVariablesIniciales.Comprobante.Impuestos == false)
                     {
                         oComprobanteConTotales.ImporteIVAGeneral = 0;
                         oComprobanteConTotales.ImporteTotal = oComprobanteConTotales.ImporteNeto;
@@ -903,13 +901,8 @@ namespace APIImportacionComprobantes.BLL
         /// <param name="oComprobante"></param>
         /// <param name="oEmpresa"></param>
         /// <returns></returns>
-        private static Request VerificarClientePredeterminado(Pedido oPedido, GESI.CORE.BO.Verscom2k.Cliente oCliente, GESI.CORE.BO.Verscom2k.Comprobante oComprobante,
-                                                              GESI.CORE.BO.Empresa oEmpresa,GESI.CORE.BO.Verscom2k.ListaAlicuotasImpuestos moAlicuotasImpuestos, 
-                                                              GESI.CORE.BO.Verscom2k.ListaFormasDePago moFormaDePago,String strReleerPrecios,int intTipoOperacionID,int AlmacenID,
-                                                              GESI.GESI.BO.ListaEstadosComprobantesDeVentas lstEstadosComprobantesVenta,GESI.GESI.BO.ListaReferenciasContables lstListaRefContables,
-                                                              GESI.CORE.BO.ListaConfiguracionesBase lstConfiguracionesBase,List<GESI.GESI.BO.CanalDeAtencion> lstCanalesDeAtencion)
+        private static Request VerificarClientePredeterminado(Pedido oPedido, GESI.CORE.BO.Verscom2k.Cliente oCliente,VariablesIniciales oVariablesIniciales,String strReleerPrecios,int AlmacenID)
         {
-            Request respuesta = new Request();
             Request objRequest = new Request();
             GESI.CORE.BO.ConfiguracionBase oConfiguracion = GESI.CORE.DAL.ConfiguracionesBaseDB.GetItem("Ventas", "Configuracion", "CliPredImportacionNPE");
 
@@ -920,7 +913,7 @@ namespace APIImportacionComprobantes.BLL
                     oCliente = GESI.CORE.DAL.Verscom2k.TablasGeneralesGESIDB.GetItemCliente(Convert.ToInt32(oConfiguracion.Valor), 0, "", _SessionMgr.EmpresaID);
                     if (oCliente != null)
                     {
-                        objRequest = AltaPedido(oPedido, oCliente, oComprobante, oEmpresa,moAlicuotasImpuestos,moFormaDePago,strReleerPrecios, intTipoOperacionID,AlmacenID,lstEstadosComprobantesVenta, lstListaRefContables, lstConfiguracionesBase, lstCanalesDeAtencion);
+                        objRequest = AltaPedido(oPedido, oCliente, oVariablesIniciales,strReleerPrecios,AlmacenID);
                     }
                     else
                     {
@@ -1239,8 +1232,7 @@ namespace APIImportacionComprobantes.BLL
         /// <param name="strTipoPrecio"></param>
         /// <returns></returns>
         private static GESI.ERP.Core.BO.cItemComprobanteDeVenta DeterminarDetalleDeVenta( GESI.CORE.BO.Verscom2k.Producto Producto,int CanalDeVentaID,Item oItem, 
-                                                                                          GESI.CORE.BO.Verscom2k.Cliente oCliente, GESI.CORE.BO.Empresa oEmpresa,GESI.CORE.BO.Verscom2k.Comprobante oComprobante,String strTipoPrecio, 
-                                                                                          GESI.CORE.BO.Verscom2k.ListaAlicuotasImpuestos moAlicuotasImpuestos,String mstrReleerPrecios)
+                                                                                          GESI.CORE.BO.Verscom2k.Cliente oCliente,VariablesIniciales oVariablesIniciales,String strTipoPrecio,String mstrReleerPrecios)
         {
             GESI.GESI.BO.DetalleDeVenta DetalleVenta = null;
             try
@@ -1293,7 +1285,7 @@ namespace APIImportacionComprobantes.BLL
 
                             case "F": // Tomar los precios como Finales
                                 decPrecioFinal = oItem.Precio;
-                                decPrecioNeto = CalcularPrecioNetoProducto(decPrecioFinal, Producto.AlicuotaID,moAlicuotasImpuestos);
+                                decPrecioNeto = CalcularPrecioNetoProducto(decPrecioFinal, Producto.AlicuotaID, oVariablesIniciales.LstAlicuotasImpuestos);
                                 break;
                         }
                     }
@@ -1307,7 +1299,7 @@ namespace APIImportacionComprobantes.BLL
                 #endregion
 
 
-                decPrecioUnitario = CalcularPrecioUnitario(decPrecioNeto, decPrecioFinal, oCliente, oEmpresa);
+                decPrecioUnitario = CalcularPrecioUnitario(decPrecioNeto, decPrecioFinal, oCliente, oVariablesIniciales.OEmpresa);
                 oItemCompr.TipoDeItem = "P";
                 oItemCompr.CantidadU1 = oItem.UnidadU1;
                 oItemCompr.CantidadU2 = oItem.UnidadU2;
@@ -1341,7 +1333,7 @@ namespace APIImportacionComprobantes.BLL
 
                 oItemCompr.ImporteTotalNeto = oResultado.ImporteNeto;
                 
-                if (oComprobante.Impuestos == false)
+                if (oVariablesIniciales.Comprobante.Impuestos == false)
                 {
                     oItemCompr.ImporteTotalFinal = oResultado.ImporteNeto;
                 }

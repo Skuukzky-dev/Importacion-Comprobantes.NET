@@ -95,7 +95,8 @@ namespace APIImportacionComprobantes.BLL
                 GESI.CORE.BLL.Verscom2k.AlmacenesMgr.SessionManager = MiAPISessionMgr.SessionMgr;
                 GESI.CORE.BLL.EmpresasMgr.SessionManager = MiAPISessionMgr.SessionMgr;
                 GESI.CORE.BLL.Verscom2k.FormasDePagoMgr.sessionMgr = MiAPISessionMgr.SessionMgr;
-
+                GESI.ERP.Core.BLL.CanalesDeVentaManager.SessionManager = MiAPISessionMgr.SessionMgr;
+                
                 #endregion
 
                 switch (TipoDeAPI) // Determino que tipo de API se esta utilizando
@@ -107,9 +108,9 @@ namespace APIImportacionComprobantes.BLL
                         oVariablesIniciales.OEmpresa = GESI.CORE.BLL.EmpresasMgr.GetItem(MiAPISessionMgr.SessionMgr.EmpresaID);
                         oVariablesIniciales.Comprobante = GESI.CORE.BLL.Verscom2k.ComprobantesMgr.GetItem(MiAPISessionMgr.ComprobanteID);
                         oVariablesIniciales.LstCanalesDeAtencion = GESI.GESI.BLL.TablasGeneralesGESIMgr.CanalesDeAtencionGetList();
-                        oVariablesIniciales.LstConfiguraciones = GESI.CORE.BLL.ConfiguracionesBaseMgr.GetList();
+                        oVariablesIniciales.LstConfiguraciones = GESI.CORE.BLL.ConfiguracionesBaseMgr.GetList();                        
                         oVariablesIniciales.LstAlmacenes = GESI.CORE.BLL.Verscom2k.AlmacenesMgr.GetList();
-                        oVariablesIniciales.LstCanalesDeVenta = GESI.GESI.BLL.TablasGeneralesGESIMgr.CanalesDeVentaGetList();
+                        oVariablesIniciales.LstCanalesDeVenta =  GESI.ERP.Core.BLL.CanalesDeVentaManager.GetList((uint)MiAPISessionMgr.SessionMgr.EmpresaID);
                         oVariablesIniciales.LstEstadosComprobantesVenta = GESI.GESI.BLL.TablasGeneralesGESIMgr.EstadosComprobantesDeVentaGetList();
                         oVariablesIniciales.LstComprobantes = GESI.CORE.BLL.Verscom2k.ComprobantesMgr.GetList();
                         oVariablesIniciales.LstReferenciasContables = GESI.GESI.BLL.ReferenciasContablesMgr.GetList(MiAPISessionMgr.SessionMgr.EmpresaID);
@@ -145,6 +146,7 @@ namespace APIImportacionComprobantes.BLL
                         oVariablesIniciales.LstValores = GESI.GESI.BLL.TablasGeneralesGESIMgr.GetListValores(false);
                         oVariablesIniciales.LstConfiguraciones = GESI.CORE.BLL.ConfiguracionesBaseMgr.GetList();
                         oVariablesIniciales.Comprobante = GESI.CORE.BLL.Verscom2k.ComprobantesMgr.GetItem(MiAPISessionMgr.ComprobanteID);
+                        oVariablesIniciales.LstBancos = GESI.GESI.BLL.TablasGeneralesGESIMgr.GetListBancos();
                         List<GESI.CORE.BO.ConfiguracionBase> oConfiguracionBase = oVariablesIniciales.LstConfiguraciones.Where(x => x.GrupoID == "VENTAS" && x.SeccionID == "Comprobante_" + MiAPISessionMgr.SessionMgr.EmpresaID + "_" + oVariablesIniciales.Comprobante.ComprobanteID).ToList();
 
                         GESI.GESI.BO.ListaBancos lstBancos = new GESI.GESI.BO.ListaBancos();

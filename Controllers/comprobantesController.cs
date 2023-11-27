@@ -99,7 +99,7 @@ namespace Importacion_Comprobantes.NET.Controllers
                                             Request objRequest = new Request();
                                             objRequest.Error = APIHelper.DevolverErrorAPI((int)APIHelper.tErrores.eCantidadDeComprobantesExcedida, "Se supera la cantidad maxima de comprobantes a Importar", "E", MiAPISessionMgr.SessionMgr.UsuarioID, APIHelper.AltaCobros);
                                             objRequest.Success = false;
-                                            lstRequests.Add(objRequest);
+                                            return BadRequest(objRequest);
                                         }
                                         else
                                         {
@@ -111,7 +111,7 @@ namespace Importacion_Comprobantes.NET.Controllers
                                                 Request objRequest = new Request();
                                                 objRequest.Error = APIHelper.DevolverErrorAPI((int)APIHelper.tErrores.eDatoVacioONull, "No se encontro el SubdiarioID en el ComprobanteID: " + moComprobanteID, "E", MiAPISessionMgr.SessionMgr.UsuarioID, APIHelper.AltaCobros);
                                                 objRequest.Success = false;
-                                                lstRequests.Add(objRequest);
+                                                return BadRequest(objRequest);
                                             }
                                             else
                                             {
@@ -129,7 +129,7 @@ namespace Importacion_Comprobantes.NET.Controllers
                                                         Request objRequest = new Request();
                                                         objRequest.Error = APIHelper.DevolverErrorAPI((int)APIHelper.tErrores.eDatoVacioONull, "No se encontro datos a procesar", "E", mstrUsuarioID, APIHelper.AltaCobros);
                                                         objRequest.Success = false;
-                                                        lstRequests.Add(objRequest);
+                                                        return BadRequest(objRequest);
                                                     }
                                                 }
                                             }
@@ -140,7 +140,7 @@ namespace Importacion_Comprobantes.NET.Controllers
                                         Request objRequest = new Request();
                                         objRequest.Error = APIHelper.DevolverErrorAPI((int)APIHelper.tErrores.eDatoVacioONull, "No se encontro datos a procesar", "E", mstrUsuarioID, APIHelper.AltaCobros);
                                         objRequest.Success = false;
-                                        lstRequests.Add(objRequest);
+                                        return BadRequest(objRequest);
                                     }
                                 }
                                 else
@@ -148,7 +148,7 @@ namespace Importacion_Comprobantes.NET.Controllers
                                     Request objRequest = new Request();
                                     objRequest.Error = APIHelper.DevolverErrorAPI((int)APIHelper.tErrores.eDatoVacioONull, "No se encontro datos a procesar", "E", mstrUsuarioID, APIHelper.AltaCobros);
                                     objRequest.Success = false;
-                                    lstRequests.Add(objRequest);
+                                    return BadRequest(objRequest);
                                 }
                             }
                         }
@@ -157,7 +157,7 @@ namespace Importacion_Comprobantes.NET.Controllers
                             Request objRequest = new Request();
                             objRequest.Error = APIHelper.DevolverErrorAPI((int)APIHelper.tErrores.ePermisosCobros, "No se encontro datos a procesar", "E", mstrUsuarioID, APIHelper.AltaCobros);
                             objRequest.Success = false;
-                            lstRequests.Add(objRequest);
+                            return BadRequest(objRequest);
                         }
 
 
@@ -169,7 +169,7 @@ namespace Importacion_Comprobantes.NET.Controllers
                     Request objRequest = new Request();
                     objRequest.Error = APIHelper.DevolverErrorAPI((int)APIHelper.tErrores.eErrorInternoAplicacion, "Error interno de la Aplicacion Descripcion: " + ex.Message, "E", mstrUsuarioID, APIHelper.AltaCobros);
                     objRequest.Success = false;
-                    lstRequests.Add(objRequest);
+                    return StatusCode(500,objRequest);
                 }
                 LogSucesosAPI.LoguearErrores("----- FIN Importacion de Comprobantes de Cobro ----", moEmpresaID);
                 return Ok(lstRequests);
@@ -225,7 +225,7 @@ namespace Importacion_Comprobantes.NET.Controllers
                                 objRequest.Error = APIHelper.DevolverErrorAPI((int)APIHelper.tErrores.eFormatoIncorrectoSolicitud, "No se encontraron pedidos a importar", "E", mstrUsuarioID, APIHelper.AltaPedidos);
                                 objRequest.Success = false;
                                 lstRequests.Add(objRequest);
-                                return BadRequest(lstRequests);
+                                return BadRequest(objRequest);
                                 #endregion
                             }
                             else
@@ -251,7 +251,7 @@ namespace Importacion_Comprobantes.NET.Controllers
                                         Request objRequest = new Request();
                                         objRequest.Error = APIHelper.DevolverErrorAPI((int)APIHelper.tErrores.eDatoVacioONull, "No se encontraron pedidos a importar", "E", mstrUsuarioID, APIHelper.AltaPedidos);
                                         objRequest.Success = false;
-                                        lstRequests.Add(objRequest);
+                                        return NoContent();                                       
                                         #endregion
                                     }
                                     else
@@ -267,12 +267,13 @@ namespace Importacion_Comprobantes.NET.Controllers
                                             Request objRequest = new Request();
                                             objRequest.Error = APIHelper.DevolverErrorAPI((int)APIHelper.tErrores.eCantidadDeComprobantesExcedida, "Se supera la cantidad maxima de comprobantes a Importar", "E", mstrUsuarioID, "AltaPedidos");
                                             objRequest.Success = false;
-                                            lstRequests.Add(objRequest);
+                                            return BadRequest(objRequest);
+                                           
                                             #endregion
                                         }
                                         else
                                         {
-                                            VariablesIniciales oVariableInicial = APIHelper.DevolverVariablesIniciales(MiAPISessionMgr);
+                                             VariablesIniciales oVariableInicial = APIHelper.DevolverVariablesIniciales(MiAPISessionMgr);
 
                                             if (oVariableInicial.SubdiarioID == 0)
                                             {
@@ -280,6 +281,7 @@ namespace Importacion_Comprobantes.NET.Controllers
                                                 Request objRequest = new Request();
                                                 objRequest.Error = APIHelper.DevolverErrorAPI((int)APIHelper.tErrores.eDatoVacioONull, "El comprobante no tiene asignado un SubdiarioID", "E", mstrUsuarioID, "AltaPedidos");
                                                 objRequest.Success = false;
+                                                return BadRequest(objRequest);
                                                 #endregion
                                             }
                                             else
@@ -300,21 +302,23 @@ namespace Importacion_Comprobantes.NET.Controllers
 
                                                                 if (lstComprobantesAux.Count > 0)
                                                                 {
-                                                                    lstRequests.Add(PedidosMgr.ImportarPedido(oPedido, oVariableInicial, lstComprobantesAux[0]));
+                                                                    oVariableInicial.Comprobante = lstComprobantesAux[0];
+                                                                    lstRequests.Add(PedidosMgr.ImportarPedido(oPedido, oVariableInicial));
+                                                                    //lstRequests.Add(PedidosMgr.ImportarPedido(oPedido, oVariableInicial, lstComprobantesAux[0]));
                                                                 }
                                                                 else
                                                                 {
-                                                                    lstRequests.Add(PedidosMgr.ImportarPedido(oPedido, oVariableInicial,oVariableInicial.Comprobante));
+                                                                    lstRequests.Add(PedidosMgr.ImportarPedido(oPedido, oVariableInicial));
                                                                 }
                                                             }
                                                             else
                                                             {
-                                                                lstRequests.Add(PedidosMgr.ImportarPedido(oPedido, oVariableInicial,oVariableInicial.Comprobante));
+                                                                lstRequests.Add(PedidosMgr.ImportarPedido(oPedido, oVariableInicial));
                                                             }
                                                         }
                                                         else
                                                         {
-                                                            lstRequests.Add(PedidosMgr.ImportarPedido(oPedido, oVariableInicial, oVariableInicial.Comprobante));
+                                                            lstRequests.Add(PedidosMgr.ImportarPedido(oPedido, oVariableInicial));
                                                         }
                                                     }
                                                     else
@@ -325,11 +329,12 @@ namespace Importacion_Comprobantes.NET.Controllers
 
                                                         if (lstComprobantesAux.Count > 0)
                                                         {
-                                                            lstRequests.Add(PedidosMgr.ImportarPedido(oPedido, oVariableInicial, lstComprobantesAux[0]));
+                                                            oVariableInicial.Comprobante = lstComprobantesAux[0];
+                                                            lstRequests.Add(PedidosMgr.ImportarPedido(oPedido, oVariableInicial));
                                                         }
                                                         else
                                                         {
-                                                            lstRequests.Add(PedidosMgr.ImportarPedido(oPedido, oVariableInicial, oVariableInicial.Comprobante));
+                                                            lstRequests.Add(PedidosMgr.ImportarPedido(oPedido, oVariableInicial));
                                                         }
 
                                                         #endregion
@@ -349,6 +354,8 @@ namespace Importacion_Comprobantes.NET.Controllers
                             Request objRequest = new Request();
                             objRequest.Error = APIHelper.DevolverErrorAPI((int)APIHelper.tErrores.ePermisosPedidos, "No esta autorizado a acceder a este recurso.", "E", mstrUsuarioID, APIHelper.AltaPedidos);
                             objRequest.Success = false;
+                            lstRequests.Add(objRequest);
+                            return BadRequest(objRequest);
                             #endregion
                         }
                     }
@@ -360,6 +367,7 @@ namespace Importacion_Comprobantes.NET.Controllers
                     Request objRequest = new Request();
                     objRequest.Error = APIHelper.DevolverErrorAPI((int)APIHelper.tErrores.eErrorInternoAplicacion, "Error interno de la Aplicacion. Descripcion: " + ex.Message, "E", mstrUsuarioID, "AltaPedidos");
                     objRequest.Success = false;
+                    return StatusCode(500, objRequest);
                     #endregion
                 }
                

@@ -21,7 +21,7 @@ namespace Importacion_Comprobantes.NET.BO
         private GESI.CORE.BO.Verscom2k.ListaFormasDePago _lstFormaDePago;
         private GESI.CORE.BO.Empresa _oEmpresa;
         private GESI.CORE.BO.Verscom2k.ListaAlmacenes _lstAlmacenes;
-        private GESI.GESI.BO.ListaCanalesDeVenta _lstCanalesDeVenta;
+        private List<GESI.ERP.Core.BO.cCanalDeVenta> _lstCanalesDeVenta;
         private GESI.GESI.BO.ListaEstadosComprobantesDeVentas _lstEstadosComprobantesVenta;
         private List<GESI.GESI.BO.CanalDeAtencion> _lstCanalesDeAtencion;
         private List<GESI.CORE.BO.Verscom2k.Comprobante> _lstComprobantes;
@@ -38,7 +38,7 @@ namespace Importacion_Comprobantes.NET.BO
         public GESI.CORE.BO.Verscom2k.ListaFormasDePago LstFormaDePago { get => _lstFormaDePago; set => _lstFormaDePago = value; }
         public Empresa OEmpresa { get => _oEmpresa; set => _oEmpresa = value; }
         public GESI.CORE.BO.Verscom2k.ListaAlmacenes LstAlmacenes { get => _lstAlmacenes; set => _lstAlmacenes = value; }
-        public ListaCanalesDeVenta LstCanalesDeVenta { get => _lstCanalesDeVenta; set => _lstCanalesDeVenta = value; }
+        public List<GESI.ERP.Core.BO.cCanalDeVenta> LstCanalesDeVenta { get => _lstCanalesDeVenta; set => _lstCanalesDeVenta = value; }
         public ListaEstadosComprobantesDeVentas LstEstadosComprobantesVenta { get => _lstEstadosComprobantesVenta; set => _lstEstadosComprobantesVenta = value; }
         public List<CanalDeAtencion> LstCanalesDeAtencion { get => _lstCanalesDeAtencion; set => _lstCanalesDeAtencion = value; }
         public List<GESI.CORE.BO.Verscom2k.Comprobante> LstComprobantes { get => _lstComprobantes; set => _lstComprobantes = value; }
